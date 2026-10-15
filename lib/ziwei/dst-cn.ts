@@ -27,6 +27,8 @@
  * 全程没有任何减 1 小时的动作）。这个设计是对的：
  *   **我们无法知道用户报的是夏令时读数、还是他自己已经换算过的标准时。**
  * 默默减一小时既可能算错，又会把所有存量历史命盘悄悄改掉。所以只告知，让用户自己决定。
+ * 2026-09-30 站长同意：合盘电脑宽屏的夏令时说明浮层里给一个「减 1 小时，改为 07:30」按钮 ——
+ *   仍是**用户自己点**、点了可撤销，从不自动减（components/heming/HemingStepForm.tsx）。
  */
 
 /** 文墨 XLS_CN，逐字照抄：[年, 起月, 起日, 止月, 止日]，起止日**都含**。 */
@@ -76,6 +78,14 @@ export function chinaDSTRange(year: number): { start: string; end: string } | nu
   if (!hit) return null;
   const [, m1, d1, m2, d2] = hit;
   return { start: `${m1} 月 ${d1} 日`, end: `${m2} 月 ${d2} 日` };
+}
+
+/** 该年的夏令时起止（数字，供英文等其他语言自己拼月日；起止都含）。不在表内返回 null。 */
+export function chinaDSTSpan(year: number): { startMonth: number; startDay: number; endMonth: number; endDay: number } | null {
+  const hit = XLS_CN.find(([y]) => y === year);
+  if (!hit) return null;
+  const [, startMonth, startDay, endMonth, endDay] = hit;
+  return { startMonth, startDay, endMonth, endDay };
 }
 
 /** 表内覆盖的全部年份（升序），供文案与回归使用。 */
