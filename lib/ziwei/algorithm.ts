@@ -106,13 +106,14 @@ export type WenmoBrightnessSchool = 'default' | BrightnessSchool;
 // ★ 2026-06-20 星曜亮度全套对齐文墨：全盘亮度改由装配层直接查文墨 SB_[school] 表
 //   （wenmoStarBrightness：主星+辅星+煞星+空劫统一一套表/一套映射/子起一索引），
 //   不再走 iztro 的 astro.config 覆写（旧的 DEFAULT_BRIGHTNESS 善本手敲表 + wenmoBrightnessTableToIztroFormat
-//   方向读反的映射，都已弃用）。★ 2026-06-20 default = 现代修订二 XD2——文墨 APP 默认亮度流派即「现代修订二」
-//   （用户实证 + 真盘全 12 宫 27/27；之前误判成「全书」是因辅星 右弼申/武曲申 等读错，纠正）。
-//   流派切换只改此值（同步主辅煞，避免不一致）。用户显式选全书/现代一/中州才覆写。
-let currentBrightSchool: BrightnessSchool = 'XD2';
+//   方向读反的映射，都已弃用）。
+// ★ 2026-10-20 default = 《斗数全书》QS，对齐文墨天机出厂默认：文墨「重置设置 → 重置为系统默认值」后
+//   星曜亮度停在「依据斗数全书 (默认)」（安星码 C5VUC）；安卓专业版 2.5.26 / iOS 2.5.29 出厂默认真盘逐格吻合。
+//   6-20～10-19 曾默认 XD2（依据的是一台手选了「现代修订亮度二」的文墨）。流派切换只改此值（同步主辅煞，避免不一致）。
+let currentBrightSchool: BrightnessSchool = 'QS';
 
 export function setBrightnessSchool(school: WenmoBrightnessSchool): void {
-  currentBrightSchool = school === 'default' ? 'XD2' : school;
+  currentBrightSchool = school === 'default' ? 'QS' : school;
 }
 
 export type LunarMonthPolicy = 'split' | 'next-month' | 'prev-month' | 'origin-month';
@@ -403,6 +404,12 @@ function applyWenmoJiekong(palaces: Palace[], yearStem: number): void {
     for (const s of p.stars) {
       if (s.name === '截路') s.name = '截空';
       else if (s.name === '空亡') s.name = '副截';
+      else continue;
+      // ★ 2026-10-20 改名后按新名字补亮度：iztro 原名查不到文墨亮度，阳干年（不换宫、下面直接 return）
+      //   截空 / 副截原来一直留白，文墨出厂默认是有亮度的。阴干换宫后下面再按新宫重算。
+      const rb = wenmoStarBrightness(s.name, p.branch, currentBrightSchool);
+      s.brightness = rb ? mapBrightness(rb) : undefined;
+      s.brightnessRaw = extractRawBrightness(rb);
     }
   }
   if (yearStem % 2 === 0) return;

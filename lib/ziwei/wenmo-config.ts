@@ -77,7 +77,7 @@ export interface WenmoConfig {
 export const DEFAULT_LEAP_MONTH: LeapMonth = 'split';
 
 export const WENMO_DEFAULT_CONFIG: WenmoConfig = {
-  brightnessSchool: 'default',           // 我们的混合表（基于全书 + 文墨安星码 8GDPB）
+  brightnessSchool: 'default',           // = 《斗数全书》（algorithm.ts 把 'default' 当 QS 用，对齐文墨出厂默认，10-20 改）
   gengYearSihua: 'GYWYT',                // 阳武阴同
   tianmaSchool: 'year-branch',           // 依据年支
   tiankongSchool: 'normal',              // 常规
@@ -110,10 +110,21 @@ export function loadWenmoConfig(): WenmoConfig {
       parsed.leapMonth = DEFAULT_LEAP_MONTH;
       try { localStorage.setItem(WENMO_LEAP_MIGRATED_KEY, '1'); localStorage.setItem(WENMO_CONFIG_LS_KEY, JSON.stringify({ ...WENMO_DEFAULT_CONFIG, ...parsed })); } catch { /* noop */ }
     }
-    return { ...WENMO_DEFAULT_CONFIG, ...parsed };
+    return normalizeBrightness({ ...WENMO_DEFAULT_CONFIG, ...parsed });
   } catch {
     return WENMO_DEFAULT_CONFIG;
   }
+}
+
+/**
+ * ★ 2026-10-18 默认项与它底层的那张表只留一项（站长：两项排出来一样，别并排摆）。
+ * ★ 2026-10-20 默认改成《斗数全书》（文墨出厂默认，见 algorithm.ts setBrightnessSchool），归并方向随之改：
+ *   手选 QS（本机存的、分享链接 bs=QS）一律当默认，勾落在「《斗数全书》派（默认）」；
+ *   XD2 不再归并——它现在是单独一项「现代修正 v2」，手选了就尊重。
+ *   10-18 到 10-20 之间被归成 'default' 的老 XD2 选择分不出来，随默认一起变成全书（站长定：跟文墨默认走）。
+ */
+function normalizeBrightness(cfg: WenmoConfig): WenmoConfig {
+  return cfg.brightnessSchool === 'QS' ? { ...cfg, brightnessSchool: 'default' } : cfg;
 }
 
 /** 保存配置到 localStorage */
@@ -160,7 +171,7 @@ export function configToParams(cfg: WenmoConfig): Record<string, string> {
 
 /** URLSearchParams → WenmoConfig（缺省字段用默认值填充）*/
 export function paramsToConfig(params: URLSearchParams): WenmoConfig {
-  return {
+  return normalizeBrightness({
     brightnessSchool: (params.get('bs') as BrightnessSchoolOption) || WENMO_DEFAULT_CONFIG.brightnessSchool,
     gengYearSihua: (params.get('gys') as GengYearSihua) || WENMO_DEFAULT_CONFIG.gengYearSihua,
     tianmaSchool: (params.get('tm') as TianmaSchool) || WENMO_DEFAULT_CONFIG.tianmaSchool,
@@ -171,7 +182,7 @@ export function paramsToConfig(params: URLSearchParams): WenmoConfig {
     changshengSchool: (params.get('cs') as ChangshengSchool) || WENMO_DEFAULT_CONFIG.changshengSchool,
     lateZishi: (params.get('lz') as LateZishi) || WENMO_DEFAULT_CONFIG.lateZishi,
     leapMonth: (params.get('lm') as LeapMonth) || WENMO_DEFAULT_CONFIG.leapMonth,
-  };
+  });
 }
 
 // ─── UI 显示用：每个开关的所有选项 + 中文标签 ──────────────────────────
@@ -179,11 +190,11 @@ export function paramsToConfig(params: URLSearchParams): WenmoConfig {
 export const SCHOOL_OPTIONS = {
   // ★ 2026-06-17 统一格式(用户要求):每组【默认项】固定排第一,且 desc 统一以「默认 · xxx」开头
   brightnessSchool: [
-    { value: 'default', label: '混合亮度表', desc: '默认 · 全书 + 文墨安星码 8GDPB 交叉验证' },
-    { value: 'QS', label: '《斗数全书》派', desc: '古籍原始记载' },
-    { value: 'XD1', label: '现代修正 v1', desc: '文墨口径' },
+    // ★ 10-20 默认项 = 《斗数全书》（文墨出厂默认「星曜亮度 - 依据斗数全书 (默认)」），底层就是 QS 表，所以不再另列 QS
+    { value: 'default', label: '《斗数全书》派', desc: '默认 · 对齐文墨天机出厂默认' },
+    { value: 'XD2', label: '现代修正 v2', desc: '文墨可选「现代修订亮度二」' },
+    { value: 'XD1', label: '现代修正 v1', desc: '文墨可选「现代修订亮度一」' },
     { value: 'ZZ', label: '中州派', desc: '中州派理论' },
-    { value: 'XD2', label: '现代修正 v2', desc: '另一种现代修正' },
   ],
   gengYearSihua: [
     { value: 'GYWYT', label: '阳武阴同', desc: '默认 · 与 iztro / 主流一致' },
