@@ -41,12 +41,14 @@ This repo is an open snapshot of the engine behind [metisziwei.com](https://meti
 - **Engine sync** ([PR #39](https://github.com/Renhuai123/ziwei-doushu/pull/39)): `chinaDSTSpan(year)` in `dst-cn.ts`; longitudes for province-administered county-level cities in `cities.ts`.
 - **License**: `DATASET-LICENSE` now covers v4.0; quotations from *Tian Ji* inside the readings are not covered by the dataset license.
 
+> **2026-10-27 addendum**: engine sync. `true-solar-time.ts` accepts `utcOffsetMinutes` (the birthplace's standard UTC offset) for births outside China; results inside China are unchanged. New `clock-adjust.ts` converts a clock reading taken under daylight saving time (or an older time zone) to standard time; it never crosses midnight and is meant to run only when the user confirms. Correction: the engine detects China DST but has never subtracted it automatically; the table below said otherwise.
+
 ## What the engine handles
 
 | Feature | Notes |
 |---|---|
 | True solar time | Longitude offset plus the equation of time, so births near hour boundaries are not off by one double-hour |
-| China DST | 1986–1991 daylight-saving periods are removed automatically |
+| China DST | 1986–1991 daylight-saving periods are detected (not subtracted automatically; convert the clock reading with `clock-adjust.ts` once the user confirms) |
 | Leap months | Four configurable conventions (previous month / next month / split by day / same month) |
 | Late Zi hour | 23:00–23:59 is charted on the next day, 00:00–00:59 on the same day; switchable |
 | Star brightness | 7 levels (庙 旺 得 利 平 不 陷); brightness tables of different schools are switchable, not hard-coded |
